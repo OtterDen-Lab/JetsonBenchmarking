@@ -18,3 +18,4 @@ Step 4.) Install the Python package dependencies
 Step 5.) Install Tensorflow
 
 	'sudo pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v511 tensorflow==2.12.0+nv23.05'
+

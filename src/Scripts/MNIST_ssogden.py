@@ -31,6 +31,7 @@ def parse_flags():
     parser.add_argument("--normalize_input", action="store_true", help="normalize input data")
     parser.add_argument("--num_epochs", default=20, type=int, help="Number of epochs for each model to train")
     parser.add_argument("--num_trials", default=5, type=int, help="Number of trials overall")
+    parser.add_argument("--num_dense_layers", default=1, type=int, help="Number of dense layers to add")
     args = parser.parse_args()
     return args
 
@@ -89,11 +90,14 @@ def process_data(ds_train, ds_test, ds_info, batch_size=128, *args, **kwargs):
 @timing
 def get_model(*args, **kwargs):
     
-    model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(input_shape=(28, 28)),
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dense(10)
-    ])
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.Flatten(input_shape=(28, 28)))
+    if "num_dense_layers" in kwargs:
+        for _ in range(kwargs["num_dense_layers"]):
+            model.add(tf.keras.layers.Dense(128, activation='elu'))
+    else:
+        model.add(tf.keras.layers.Dense(128, activation='elu'))
+    model.add(tf.keras.layers.Dense(10))
     
     model.compile(optimizer='adam',
                   loss='sparse_categorical_crossentropy',
@@ -113,23 +117,24 @@ def evaluate_model(model, ds_test, *args, **kwargs):
     model.evaluate(ds_test)
 
 
-def run_test(num_epochs, normalize_input):
+def run_test(num_epochs, normalize_input, *args, **kwargs):
     
     
-    (ds_train, ds_test, ds_info), time__get_data = get_data()
+    (ds_train, ds_test, ds_info), time__get_data = get_data(**kwargs)
     (ds_train, ds_test), time__process_data = process_data(
         ds_train,
         ds_test,
         ds_info,
         batch_size=1024,
-        normalize_data=normalize_input
+        normalize_data=normalize_input,
+        **kwargs
     )
     
     #creates the NNM
-    (model), time__get_model = get_model()
+    (model), time__get_model = get_model(**kwargs)
     
-    _, time__train_model = train_model(model, ds_train, num_epochs=num_epochs)
-    _, time__evaluate_model = evaluate_model(model, ds_test)
+    _, time__train_model = train_model(model, ds_train, num_epochs=num_epochs, **kwargs)
+    _, time__evaluate_model = evaluate_model(model, ds_test, **kwargs)
     
     return {
         "time__get_data" : time__get_data,
@@ -144,8 +149,7 @@ def main():
     for i in range(flags.num_trials):
         pprint(
             run_test(
-                num_epochs=flags.num_epochs,
-                normalize_input=flags.normalize_input
+                **vars(flags)
             )
         )
       # Write results out to CSV file

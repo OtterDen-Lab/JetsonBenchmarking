@@ -142,6 +142,7 @@ def run_test(num_epochs, normalize_input, *args, **kwargs):
         "time__get_model" : time__get_model,
         "time__train_model" : time__train_model,
         "time__evaluate_model" : time__evaluate_model,
+        #"model_accuracy" : model.
     }
     
 def main():

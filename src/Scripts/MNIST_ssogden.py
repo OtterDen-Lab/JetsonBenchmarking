@@ -128,8 +128,8 @@ def run_test(num_epochs, normalize_input):
     #creates the NNM
     (model), time__get_model = get_model()
     
-    time__train_model = train_model(model, ds_train, num_epochs=num_epochs)
-    time__evaluate_model = evaluate_model(model, ds_test)
+    _, time__train_model = train_model(model, ds_train, num_epochs=num_epochs)
+    _, time__evaluate_model = evaluate_model(model, ds_test)
     
     return {
         "time__get_data" : time__get_data,
@@ -148,6 +148,7 @@ def main():
                 normalize_input=flags.normalize_input
             )
         )
+      # Write results out to CSV file
 
 # This makes the script launch the main function.
 if __name__ == "__main__":

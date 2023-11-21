@@ -1,4 +1,6 @@
 ##THIS WAS IMPORTED FROM ADV. DATA SCIENCE
+from pprint import pprint
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -26,7 +28,9 @@ log.setLevel(logging.INFO)
 
 def parse_flags():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--normalize_input", action="store_true")
+    parser.add_argument("--normalize_input", action="store_true", help="normalize input data")
+    parser.add_argument("--num_epochs", default=20, type=int, help="Number of epochs for each model to train")
+    parser.add_argument("--num_trials", default=5, type=int, help="Number of trials overall")
     args = parser.parse_args()
     return args
 
@@ -41,9 +45,10 @@ def timing(wrapped, instance, args, kwargs):
         te = time.time_ns()
         te_n = time.thread_time_ns()
         te_p = time.process_time_ns()
-        log.info(f"TIMING: {wrapped.__name__}({[str(i)[:100] for i in args], kw}): {(te-ts)/1000000.0 : 0.3f}ms {(te_n-ts_n)/1000000.0 : 0.3f}ms {(te_p-ts_p)/1000000.0 : 0.3f}ms")
+        # log.info(f"TIMING: {wrapped.__name__}({[str(i)[:100] for i in args], kw}): {(te-ts)/1000000.0 : 0.3f}ms {(te_n-ts_n)/1000000.0 : 0.3f}ms {(te_p-ts_p)/1000000.0 : 0.3f}ms")
+        log.info(f"TIMING: {wrapped.__name__}: {(te-ts)/1000000.0 : 0.3f}ms {(te_n-ts_n)/1000000.0 : 0.3f}ms {(te_p-ts_p)/1000000.0 : 0.3f}ms")
         
-        return result
+        return result, ((te-ts)/1000000.0)
     return wrapper(*args, **kwargs)
 
 @timing
@@ -98,33 +103,51 @@ def get_model(*args, **kwargs):
 
 @timing
 def train_model(model, ds_train, *args, **kwargs):
-    model.fit(ds_train, epochs=5)
+    model.fit(
+        ds_train,
+        epochs=(5 if "num_epochs" not in kwargs else kwargs["num_epochs"])
+    )
 
 @timing
 def evaluate_model(model, ds_test, *args, **kwargs):
     model.evaluate(ds_test)
 
 
-def main():
+def run_test(num_epochs, normalize_input):
     
-    flags = parse_flags()
     
-    ds_train, ds_test, ds_info = get_data()
-    ds_train, ds_test = process_data(
+    (ds_train, ds_test, ds_info), time__get_data = get_data()
+    (ds_train, ds_test), time__process_data = process_data(
         ds_train,
         ds_test,
         ds_info,
         batch_size=1024,
-        normalize_data=flags.normalize_input
+        normalize_data=normalize_input
     )
     
     #creates the NNM
-    model = get_model()
+    (model), time__get_model = get_model()
     
-    train_model(model, ds_train)
-    evaluate_model(model, ds_test)
+    time__train_model = train_model(model, ds_train, num_epochs=num_epochs)
+    time__evaluate_model = evaluate_model(model, ds_test)
     
-
+    return {
+        "time__get_data" : time__get_data,
+        "time__process_data" : time__process_data,
+        "time__get_model" : time__get_model,
+        "time__train_model" : time__train_model,
+        "time__evaluate_model" : time__evaluate_model,
+    }
+    
+def main():
+    flags = parse_flags()
+    for i in range(flags.num_trials):
+        pprint(
+            run_test(
+                num_epochs=flags.num_epochs,
+                normalize_input=flags.normalize_input
+            )
+        )
 
 # This makes the script launch the main function.
 if __name__ == "__main__":

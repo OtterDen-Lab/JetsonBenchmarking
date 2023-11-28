@@ -118,8 +118,6 @@ def evaluate_model(model, ds_test, *args, **kwargs):
 
 
 def run_test(num_epochs, normalize_input, *args, **kwargs):
-    
-    
     (ds_train, ds_test, ds_info), time__get_data = get_data(**kwargs)
     (ds_train, ds_test), time__process_data = process_data(
         ds_train,
@@ -147,13 +145,14 @@ def run_test(num_epochs, normalize_input, *args, **kwargs):
     
 def main():
     flags = parse_flags()
-    for i in range(flags.num_trials):
-        pprint(
-            run_test(
-                **vars(flags)
-            )
-        )
-      # Write results out to CSV file
+    with open("temp.txt", "w") as fid:
+        for val in flags.grid_search:
+            for i in range(flags.num_trials):
+                results = run_test(**vars(flags), hyper_val=val)
+                # pprint(results)
+                # todo: Write results out to CSV file
+                results = add_in_hyperparamters(results, hyperparams)
+                write_to_csv(fid, results)
 
 # This makes the script launch the main function.
 if __name__ == "__main__":

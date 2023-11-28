@@ -33,6 +33,8 @@ def parse_flags():
     parser.add_argument("--num_trials", default=5, type=int, help="Number of trials overall")
     parser.add_argument("--num_dense_layers", default=1, type=int, help="Number of dense layers to add")
     # todo : what parameters would we want to change?
+    # helpful link: https://stackoverflow.com/a/15753721
+    
     args = parser.parse_args()
     return args
 

@@ -32,6 +32,7 @@ def parse_flags():
     parser.add_argument("--num_epochs", default=20, type=int, help="Number of epochs for each model to train")
     parser.add_argument("--num_trials", default=5, type=int, help="Number of trials overall")
     parser.add_argument("--num_dense_layers", default=1, type=int, help="Number of dense layers to add")
+    # todo : what parameters would we want to change?
     args = parser.parse_args()
     return args
 
@@ -141,7 +142,20 @@ def run_test(num_epochs, normalize_input, *args, **kwargs):
         "time__train_model" : time__train_model,
         "time__evaluate_model" : time__evaluate_model,
         #"model_accuracy" : model.
+        "validation_accuracies": [i for i in range(num_epochs)] # todo (and write out to a separate CSV file)
+        # todo: what else do we need to record?
     }
+
+def write_to_csv(fid, results: Dict):
+    for i, key in enumerate(results.keys()):
+        if key == "validation_accuracies":
+            continue
+        fid.write(results[key])
+      
+    # with open(f"{results['val']}-{results[i].zfill(3)}.csv", "w") as run_specific_fid:
+    #     # todo: add in column headers
+    #     for epoch_num, epoch_accuracy in enumerate(results["validation_accuries"]):
+    #         run_specific_fid.write(f"{epoch_num},{epoch_accuracy}")
     
 def main():
     flags = parse_flags()

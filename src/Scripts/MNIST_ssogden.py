@@ -36,6 +36,7 @@ def parse_flags():
   parser.add_argument("--num_epochs", default=20, type=int, help="Number of epochs for each model to train")
   parser.add_argument("--num_trials", default=1, type=int, help="Number of trials overall")
   parser.add_argument("--num_dense_layers", default=1, type=int, help="Number of dense layers to add")
+  parser.add_argument("--num_dense_units", default=128, type=int, help="Number of units in each dense layer")
   parser.add_argument("--gpu_train", action="store_true")
   parser.add_argument("--gpu_test", action="store_true")
   # todo : what parameters would we want to change?
@@ -101,11 +102,8 @@ def get_model(*args, **kwargs):
   
   model = tf.keras.models.Sequential()
   model.add(tf.keras.layers.Flatten(input_shape=(28, 28)))
-  if "num_dense_layers" in kwargs:
-    for _ in range(kwargs["num_dense_layers"]):
-      model.add(tf.keras.layers.Dense(128, activation='elu'))
-  else:
-    model.add(tf.keras.layers.Dense(128, activation='elu'))
+  for _ in range(kwargs["num_dense_layers"]):
+    model.add(tf.keras.layers.Dense(kwargs["num_dense_units"], activation='elu'))
   model.add(tf.keras.layers.Dense(10))
   
   model.compile(optimizer='adam',

@@ -108,7 +108,7 @@ def get_model(*args, **kwargs):
   
   model.compile(optimizer='adam',
           loss='sparse_categorical_crossentropy',
-          metrics=['accuracy'])
+          metrics=['accuracy', 'sparse_categorical_crossentropy'])
   
   return model
 
@@ -121,6 +121,7 @@ def train_model(model, ds_train, *args, **kwargs) -> tf.keras.callbacks.History:
         epochs=(5 if "num_epochs" not in kwargs else kwargs["num_epochs"])
       )
   else:
+    # with tf.device("/CPU:0"):
     history = model.fit(
       ds_train,
       epochs=(5 if "num_epochs" not in kwargs else kwargs["num_epochs"])
@@ -156,17 +157,19 @@ def run_test(num_epochs, normalize_input, *args, **kwargs):
   
   print(history.history.keys())
   
-  return {
+  return_dict = {
     "time__get_data" : time__get_data,
     "time__process_data" : time__process_data,
     "time__get_model" : time__get_model,
     "time__train_model" : time__train_model,
     "time__evaluate_model" : time__evaluate_model,
     #"model_accuracy" : model.
-    "validation_accuracies": history.history['accuracy'],
-    "validation_losses": history.history['loss'] # [i for i in range(num_epochs)] # todo (and write out to a separate CSV file)
-    # todo: what else do we need to record?
   }
+  
+  for key in history.history.keys():
+    return_dict[key] = history.history[key]
+  
+  return return_dict
 
 def write_to_csv(fid, results):
   for i, key in enumerate(results.keys()):

@@ -177,10 +177,10 @@ def write_to_csv(fid, results):
       continue
     fid.write(results[key])
   
-  # with open(f"{results['val']}-{results[i].zfill(3)}.csv", "w") as run_specific_fid:
-  #     # todo: add in column headers
-  #     for epoch_num, epoch_accuracy in enumerate(results["validation_accuries"]):
-  #         run_specific_fid.write(f"{epoch_num},{epoch_accuracy}")
+  with open(f"{results['val']}-{results[i].zfill(3)}.csv", "w") as run_specific_fid:
+      # todo: add in column headers
+      for epoch_num, epoch_accuracy in enumerate(results["validation_accuracies"]):
+          run_specific_fid.write(f"{epoch_num},{epoch_accuracy}")
 
 def add_in_hyperparameters(results, hyperparams):
   return results

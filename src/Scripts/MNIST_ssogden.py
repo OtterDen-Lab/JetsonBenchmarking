@@ -176,7 +176,8 @@ def write_to_csv(fid, results):
     if key == "validation_accuracies":
       continue
     fid.write(results[key])
-  
+
+  # I have no idea what the code under here is doing. Ask sam for clarification  
   with open(f"{results['val']}-{results[i].zfill(3)}.csv", "w") as run_specific_fid:
       # todo: add in column headers
       for epoch_num, epoch_accuracy in enumerate(results["validation_accuracies"]):

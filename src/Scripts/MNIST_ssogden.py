@@ -175,13 +175,13 @@ def write_to_csv(fid, results):
   for i, key in enumerate(results.keys()):
     if key == "validation_accuracies":
       continue
-    fid.write(results[key])
+    fid.write(str(key) + ": " + str(results[key]) + "\n")
 
   # I have no idea what the code under here is doing. Ask sam for clarification  
-  with open(f"{results['val']}-{results[i].zfill(3)}.csv", "w") as run_specific_fid:
-      # todo: add in column headers
-      for epoch_num, epoch_accuracy in enumerate(results["validation_accuracies"]):
-          run_specific_fid.write(f"{epoch_num},{epoch_accuracy}")
+  # with open(f"{results['val']}-{results[i].zfill(3)}.csv", "w") as run_specific_fid:
+  #     # todo: add in column headers
+  #     for epoch_num, epoch_accuracy in enumerate(results["validation_accuracies"]):
+  #         run_specific_fid.write(f"{epoch_num},{epoch_accuracy}")
 
 def add_in_hyperparameters(results, hyperparams):
   return results
@@ -193,7 +193,7 @@ def main():
       # pprint(results)
       # todo: Write results out to CSV file
       results = add_in_hyperparameters(results, hyperparams={})
-      #write_to_csv(fid, results)
+      write_to_csv(fid, results)
       pprint(results)
 
 # This makes the script launch the main function.

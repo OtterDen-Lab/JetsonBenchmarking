@@ -22,6 +22,8 @@ import wrapt
 import logging
 import argparse
 
+import csv
+
 #Allows for logging to happen.
 logging.basicConfig()
 log = logging.getLogger("common")
@@ -171,11 +173,24 @@ def run_test(num_epochs, normalize_input, *args, **kwargs):
   
   return return_dict
 
-def write_to_csv(fid, results):
-  for i, key in enumerate(results.keys()):
-    if key == "validation_accuracies":
-      continue
-    fid.write(str(key) + ": " + str(results[key]) + "\n")
+def write_to_csv(results, csv_file_name):
+  # Open the CSV file in write mode
+  with open(csv_file_name, 'w', newline='') as csv_file:
+    # Create a CSV writer object
+    csv_writer = csv.writer(csv_file)
+
+    # Write the header (keys of the dictionary) to the CSV file
+    csv_writer.writerow(results.keys())
+
+    # Write the values of the dictionary to the CSV file
+    csv_writer.writerow(results.values())
+
+
+
+  # for i, key in enumerate(results.keys()):
+  #   if key == "validation_accuracies":
+  #     continue
+  #   fid.write(str(key) + ": " + str(results[key]) + "\n")
 
   # I have no idea what the code under here is doing. Ask sam for clarification  
   # with open(f"{results['val']}-{results[i].zfill(3)}.csv", "w") as run_specific_fid:
@@ -185,16 +200,19 @@ def write_to_csv(fid, results):
 
 def add_in_hyperparameters(results, hyperparams):
   return results
+
+
 def main():
   flags = parse_flags()
-  with open("temp.txt", "w") as fid:
-    for i in range(flags.num_trials):
-      results = run_test(**vars(flags))
-      # pprint(results)
-      # todo: Write results out to CSV file
-      results = add_in_hyperparameters(results, hyperparams={})
-      write_to_csv(fid, results)
-      pprint(results)
+  csv_file_name = 'output.csv'
+  # with open("temp.txt", "w") as fid:
+  for i in range(flags.num_trials):
+    results = run_test(**vars(flags))
+    # pprint(results)
+    # todo: Write results out to CSV file
+    results = add_in_hyperparameters(results, hyperparams={})
+    write_to_csv(results, csv_file_name)
+    pprint(results)
 
 # This makes the script launch the main function.
 if __name__ == "__main__":

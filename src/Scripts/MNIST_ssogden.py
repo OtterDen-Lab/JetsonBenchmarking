@@ -45,6 +45,7 @@ def parse_flags():
   # helpful link: https://stackoverflow.com/a/15753721
   
   args = parser.parse_args()
+  print(type(args))
   return args
 
 #This is the logging algorithm given to me from Dr. Ogden
@@ -174,8 +175,8 @@ def run_test(num_epochs, normalize_input, *args, **kwargs):
   return return_dict
 
 def write_to_csv(results, csv_file_name):
-  # Open the CSV file in write mode
-  with open(csv_file_name, 'w', newline='') as csv_file:
+  # Open the CSV file in append mode
+  with open(csv_file_name, 'a', newline='') as csv_file:
     # Create a CSV writer object
     csv_writer = csv.writer(csv_file)
 
@@ -198,19 +199,22 @@ def write_to_csv(results, csv_file_name):
   #     for epoch_num, epoch_accuracy in enumerate(results["validation_accuracies"]):
   #         run_specific_fid.write(f"{epoch_num},{epoch_accuracy}")
 
-def add_in_hyperparameters(results, hyperparams):
+def add_in_hyperparameters(results, **kwargs):
+  for key, value in kwargs.items():
+    results[key] = value
   return results
 
 
 def main():
   flags = parse_flags()
+  # print (type(**vars(flags)))
   csv_file_name = 'output.csv'
   # with open("temp.txt", "w") as fid:
   for i in range(flags.num_trials):
     results = run_test(**vars(flags))
     # pprint(results)
-    # todo: Write results out to CSV file
-    results = add_in_hyperparameters(results, hyperparams={})
+    
+    results = add_in_hyperparameters(results, **vars(flags)) #hyperparams={})
     write_to_csv(results, csv_file_name)
     pprint(results)
 

@@ -33,20 +33,57 @@ log.setLevel(logging.INFO)
 #tf.debugging.set_log_device_placement(True)
 
 def parse_flags():
-  parser = argparse.ArgumentParser()
-  parser.add_argument("--normalize_input", action="store_true", help="normalize input data")
-  parser.add_argument("--num_epochs", default=20, type=int, help="Number of epochs for each model to train")
-  parser.add_argument("--num_trials", default=1, type=int, help="Number of trials overall")
-  parser.add_argument("--num_dense_layers", default=1, type=int, help="Number of dense layers to add")
-  parser.add_argument("--num_dense_units", default=128, type=int, help="Number of units in each dense layer")
-  parser.add_argument("--gpu_train", action="store_true")
-  parser.add_argument("--gpu_test", action="store_true")
-  # todo : what parameters would we want to change?
-  # helpful link: https://stackoverflow.com/a/15753721
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--normalize_input", action="store_true", help="Normalize input data")
+    parser.add_argument("--num_epochs", default=20, type=int, help="Number of epochs for each model to train")
+    parser.add_argument("--num_trials", default=1, type=int, help="Number of trials overall")
+    parser.add_argument("--num_dense_layers", default=1, type=int, help="Number of dense layers to add")
+    parser.add_argument("--num_dense_units", default=128, type=int, help="Number of units in each dense layer")
+    parser.add_argument("--gpu_train", action="store_true", help="Use GPU for training")
+    parser.add_argument("--gpu_test", action="store_true", help="Use GPU for testing")
+    
+    # Data-related options
+    #parser.add_argument("--data_path", default="data/", help="Path to the dataset") Not usable currently. Data is coming for MNIST which 
+    parser.add_argument("--batch_size", default=32, type=int, help="Batch size for training")
+
+    # Model architecture options
+    parser.add_argument("--learning_rate", default=0.001, type=float, help="Learning rate for the optimizer")
+    parser.add_argument("--dropout_rate", default=0.3, type=float, help="Dropout rate for regularization")
+    parser.add_argument("--activation_function", default="relu", choices=["relu", "sigmoid", "tanh", "elu", "leaky_relu", "selu"], help="Activation function for hidden layers")
+
+    # Model training and evaluation options
+    parser.add_argument("--save_model", default=None, help="Path to save the trained model")
+    parser.add_argument("--evaluate_only", action="store_true", help="Evaluate the model without training") # Might be helpful in certain circumstances. 
+    parser.add_argument("--metrics", nargs="+", default=["accuracy"], help="Evaluation metrics")
+    parser.add_argument("--verbose", action="store_true", help="Print additional information during training and evaluation")
+    parser.add_argument("--random_seed", default=0, type=int, help="Random seed for reproducibility")
+
+    # Cross-validation options
+    group = parser.add_mutually_exclusive_group(required=False) # I am not currently 100% sure if this works. I want to make this or this situation where we will either us cross validation or split validation. Defaut being split validation. This might require some tweaking.
+    group.add_argument("--num_folds", default=5, type=int, help="Number of folds for cross-validation")
+    group.add_argument("--validation_split", default=0.2, type=float, help="Fraction of training data for validation")
+    parser.add_argument("--shuffle_cv", action="store_true", help="Shuffle data in cross-validation")
+
+    args = parser.parse_args()
+    print(type(args))
+    return args
+
+
+  # Old code that I am currently leaving here in case an issue arises
+  # parser = argparse.ArgumentParser()
+  # parser.add_argument("--normalize_input", action="store_true", help="normalize input data")
+  # parser.add_argument("--num_epochs", default=20, type=int, help="Number of epochs for each model to train")
+  # parser.add_argument("--num_trials", default=1, type=int, help="Number of trials overall")
+  # parser.add_argument("--num_dense_layers", default=1, type=int, help="Number of dense layers to add")
+  # parser.add_argument("--num_dense_units", default=128, type=int, help="Number of units in each dense layer")
+  # parser.add_argument("--gpu_train", action="store_true")
+  # parser.add_argument("--gpu_test", action="store_true")
+  # # todo : what parameters would we want to change?
+  # # helpful link: https://stackoverflow.com/a/15753721
   
-  args = parser.parse_args()
-  print(type(args))
-  return args
+  # args = parser.parse_args()
+  # print(type(args))
+  # return args
 
 #This is the logging algorithm given to me from Dr. Ogden
 @wrapt.decorator

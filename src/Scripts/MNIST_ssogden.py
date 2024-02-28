@@ -44,7 +44,7 @@ def parse_flags():
     
     # Data-related options
     #parser.add_argument("--data_path", default="data/", help="Path to the dataset") Not usable currently. Data is coming for MNIST which 
-    parser.add_argument("--batch_size", default=32, type=int, help="Batch size for training")
+    #parser.add_argument("--batch_size", default=128, type=int, help="Batch size for training") Currently breaking things. Will come back to later.
 
     # Model architecture options
     parser.add_argument("--learning_rate", default=0.001, type=float, help="Learning rate for the optimizer")
@@ -161,8 +161,8 @@ def train_model(model, ds_train, *args, **kwargs) -> tf.keras.callbacks.History:
         epochs=(5 if "num_epochs" not in kwargs else kwargs["num_epochs"])
       )
   else:
-    # with tf.device("/CPU:0"):
-    history = model.fit(
+    with tf.device('/device:CPU:0'):
+      history = model.fit(
       ds_train,
       epochs=(5 if "num_epochs" not in kwargs else kwargs["num_epochs"])
     )
@@ -174,7 +174,7 @@ def evaluate_model(model, ds_test, *args, **kwargs):
     with tf.device("/GPU:0"):
       model.evaluate(ds_test)
   else:
-    with tf.device("/CPU:0"):
+    with tf.device('/device:CPU:0'):
       model.evaluate(ds_test)
 
 

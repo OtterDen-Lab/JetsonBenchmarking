@@ -36,9 +36,9 @@ def parse_flags():
     parser = argparse.ArgumentParser()
     parser.add_argument("--normalize_input", action="store_true", help="Normalize input data")
     parser.add_argument("--num_epochs", default=20, type=int, help="Number of epochs for each model to train")
-    parser.add_argument("--num_trials", default=1, type=int, help="Number of trials overall")
+    parser.add_argument("--num_trials", default=5, type=int, help="Number of trials overall") 
     parser.add_argument("--num_dense_layers", default=1, type=int, help="Number of dense layers to add")
-    parser.add_argument("--num_dense_units", default=128, type=int, help="Number of units in each dense layer")
+    parser.add_argument("--num_dense_units", default=1024, type=int, help="Number of units in each dense layer")
     parser.add_argument("--gpu_train", action="store_true", help="Use GPU for training")
     parser.add_argument("--gpu_test", action="store_true", help="Use GPU for testing")
     
@@ -47,22 +47,22 @@ def parse_flags():
     #parser.add_argument("--batch_size", default=128, type=int, help="Batch size for training") Currently breaking things. Will come back to later.
 
     # Model architecture options
-    parser.add_argument("--learning_rate", default=0.001, type=float, help="Learning rate for the optimizer")
-    parser.add_argument("--dropout_rate", default=0.3, type=float, help="Dropout rate for regularization")
-    parser.add_argument("--activation_function", default="relu", choices=["relu", "sigmoid", "tanh", "elu", "leaky_relu", "selu"], help="Activation function for hidden layers")
+    parser.add_argument("--learning_rate", default=0.001, type=float, help="Learning rate for the optimizer") #TODO
+    parser.add_argument("--dropout_rate", default=0.3, type=float, help="Dropout rate for regularization") #TODO
+    parser.add_argument("--activation_function", default="relu", choices=["relu", "sigmoid", "tanh", "elu", "leaky_relu", "selu"], help="Activation function for hidden layers") #TODO
 
     # Model training and evaluation options
     parser.add_argument("--save_model", default=None, help="Path to save the trained model")
-    parser.add_argument("--evaluate_only", action="store_true", help="Evaluate the model without training") # Might be helpful in certain circumstances. 
-    parser.add_argument("--metrics", nargs="+", default=["accuracy"], help="Evaluation metrics")
+    parser.add_argument("--evaluate_only", action="store_true", help="Evaluate the model without training") # TODO Might be helpful in certain circumstances. 
+    parser.add_argument("--metrics", nargs="+", default=["accuracy"], help="Evaluation metrics") #TODO Why did I add this?
     parser.add_argument("--verbose", action="store_true", help="Print additional information during training and evaluation")
-    parser.add_argument("--random_seed", default=0, type=int, help="Random seed for reproducibility")
+    parser.add_argument("--random_seed", default=0, type=int, help="Random seed for reproducibility") #Used in model_train()
 
     # Cross-validation options
     group = parser.add_mutually_exclusive_group(required=False) # I am not currently 100% sure if this works. I want to make this or this situation where we will either us cross validation or split validation. Defaut being split validation. This might require some tweaking.
-    group.add_argument("--num_folds", default=5, type=int, help="Number of folds for cross-validation")
-    group.add_argument("--validation_split", default=0.2, type=float, help="Fraction of training data for validation")
-    parser.add_argument("--shuffle_cv", action="store_true", help="Shuffle data in cross-validation")
+    group.add_argument("--num_folds", default=5, type=int, help="Number of folds for cross-validation") #TODO
+    group.add_argument("--validation_split", default=0.2, type=float, help="Fraction of training data for validation") #TODO
+    parser.add_argument("--shuffle_cv", action="store_true", help="Shuffle data in cross-validation") #TODO
 
     args = parser.parse_args()
     print(type(args))
@@ -115,7 +115,7 @@ def get_data(*args, **kwargs):
   return ds_train, ds_test, ds_info
 
 @timing
-def process_data(ds_train, ds_test, ds_info, batch_size=128, *args, **kwargs):
+def process_data(ds_train, ds_test, ds_info, batch_size, *args, **kwargs):
   def normalize_img(image, label):
     """Normalizes images: `uint8` -> `float32`."""
     return tf.cast(image, tf.float32) / 255., label
@@ -143,30 +143,43 @@ def get_model(*args, **kwargs):
   model = tf.keras.models.Sequential()
   model.add(tf.keras.layers.Flatten(input_shape=(28, 28)))
   for _ in range(kwargs["num_dense_layers"]):
-    model.add(tf.keras.layers.Dense(kwargs["num_dense_units"], activation='elu'))
+    model.add(tf.keras.layers.Dense(kwargs["num_dense_units"], activation='elu')) #Add kwargs for activation
   model.add(tf.keras.layers.Dense(10))
   
   model.compile(optimizer='adam',
           loss='sparse_categorical_crossentropy',
-          metrics=['accuracy', 'sparse_categorical_crossentropy'])
+          metrics=['accuracy', 'sparse_categorical_crossentropy']) #Add kwargs for optimizer
   
   return model
 
 @timing
 def train_model(model, ds_train, *args, **kwargs) -> tf.keras.callbacks.History:
-  if kwargs["gpu_train"]:
-    with tf.device("/GPU:0"):
-      history = model.fit(
-        ds_train,
-        epochs=(5 if "num_epochs" not in kwargs else kwargs["num_epochs"])
-      )
-  else:
-    with tf.device('/device:CPU:0'):
-      history = model.fit(
-      ds_train,
-      epochs=(5 if "num_epochs" not in kwargs else kwargs["num_epochs"])
-    )
-  return history
+    # Check if GPU training is enabled
+    if kwargs["gpu_train"]:
+        # Set the device to GPU
+        with tf.device("/GPU:0"):
+            # Set the random seed for reproducibility
+            with tf.random.seed(kwargs["random_seed"]):
+                # Train the model on the GPU
+                history = model.fit(
+                    ds_train,
+                    epochs=(5 if "num_epochs" not in kwargs else kwargs["num_epochs"])
+                )
+    else:
+        # If GPU training is not enabled, use CPU
+        # Note: Uncomment the next line if you want to use CPU
+        # with tf.device('/device:CPU:0'):
+        
+        # Set the random seed for reproducibility
+        with tf.random.seed(kwargs["random_seed"]):
+            # Train the model on the CPU
+            history = model.fit(
+                ds_train,
+                epochs=(5 if "num_epochs" not in kwargs else kwargs["num_epochs"])
+            )
+
+    # Return the training history
+    return history
 
 @timing
 def evaluate_model(model, ds_test, *args, **kwargs):
@@ -174,7 +187,7 @@ def evaluate_model(model, ds_test, *args, **kwargs):
     with tf.device("/GPU:0"):
       model.evaluate(ds_test)
   else:
-    with tf.device('/device:CPU:0'):
+    #with tf.device('/device:CPU:0'):
       model.evaluate(ds_test)
 
 
@@ -184,10 +197,13 @@ def run_test(num_epochs, normalize_input, *args, **kwargs):
     ds_train,
     ds_test,
     ds_info,
-    batch_size=1024,
+    #Batch_size is now equal to the parse args
+    batch_size=kwargs.batch_size,
     normalize_data=normalize_input,
     **kwargs
   )
+
+
   
   #creates the NNM
   (model), time__get_model = get_model(**kwargs)
@@ -244,16 +260,23 @@ def add_in_hyperparameters(results, **kwargs):
 
 def main():
   flags = parse_flags()
+  
+  # TODO Set Verbose here, need to add verbosenes after this
+  verbose = flags.verbose
   # print (type(**vars(flags)))
   csv_file_name = 'output.csv'
   # with open("temp.txt", "w") as fid:
   for i in range(flags.num_trials):
+    #TODO add evaulate only here
+
     results = run_test(**vars(flags))
     # pprint(results)
     
     results = add_in_hyperparameters(results, **vars(flags)) #hyperparams={})
     write_to_csv(results, csv_file_name)
     pprint(results)
+    if (flags.save_model):
+      save_model() # TODO Create this function.
 
 # This makes the script launch the main function.
 if __name__ == "__main__":
